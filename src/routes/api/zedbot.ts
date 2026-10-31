@@ -225,29 +225,38 @@ ${knowledgeAsText()}`;
         const encoder = new TextEncoder();
         let buffer = "";
         const stream = new ReadableStream<Uint8Array>({
+          // Keep reading until we emit text or the upstream ends; returning from pull()
+          // without enqueuing would leave the client's pending read hanging forever.
           async pull(controller) {
-            const { value, done } = await reader.read();
-            if (done) {
-              controller.close();
-              return;
-            }
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() ?? "";
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed.startsWith("data:")) continue;
-              try {
-                const evt = JSON.parse(trimmed.slice(5));
-                const parts = evt?.candidates?.[0]?.content?.parts ?? [];
-                const text = parts
-                  .filter((p: { thought?: boolean }) => !p.thought)
-                  .map((p: { text?: string }) => p.text ?? "")
-                  .join("");
-                if (text) controller.enqueue(encoder.encode(text));
-              } catch {
-                /* partial line */
+            for (;;) {
+              const { value, done } = await reader.read();
+              if (done) {
+                controller.close();
+                return;
               }
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() ?? "";
+              let emitted = false;
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith("data:")) continue;
+                try {
+                  const evt = JSON.parse(trimmed.slice(5));
+                  const parts = evt?.candidates?.[0]?.content?.parts ?? [];
+                  const text = parts
+                    .filter((p: { thought?: boolean }) => !p.thought)
+                    .map((p: { text?: string }) => p.text ?? "")
+                    .join("");
+                  if (text) {
+                    controller.enqueue(encoder.encode(text));
+                    emitted = true;
+                  }
+                } catch {
+                  /* partial line */
+                }
+              }
+              if (emitted) return;
             }
           },
           cancel() {
