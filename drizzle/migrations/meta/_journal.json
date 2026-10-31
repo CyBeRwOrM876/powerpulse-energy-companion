@@ -8,6 +8,13 @@
       "when": 1793484943532,
       "tag": "0000_powerpulse_core",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793485455271,
+      "tag": "0001_tariff_default",
+      "breakpoints": true
     }
   ]
 }
