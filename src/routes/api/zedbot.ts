@@ -22,6 +22,24 @@ function json(status: number, error: string) {
 
 type ReadingRow = { created_at: string; total_kw: number; kwh_today: number; units_left: number; circuits: unknown };
 
+function liveSummary(snap: Record<string, unknown> | undefined): string {
+  if (!snap) return "No live snapshot was sent.";
+  const live = snap["receivingLiveData"] === true;
+  const circuits = Array.isArray(snap["circuitsNow"]) ? (snap["circuitsNow"] as { name: string; watts: number; amps: number; on: boolean }[]) : [];
+  const lines = [
+    live
+      ? `LIVE DATA IS FLOWING (source: ${snap["dataSource"] === "demo" ? "demo meter" : "physical meter"}). Treat the numbers below as the real, current state of the board.`
+      : "Live readings are NOT arriving right now; use the last known values and say so briefly.",
+    `Live load ${snap["liveLoadKw"] ?? "?"} kW (1-minute average ${snap["avgLoadKwLastMinute"] ?? "?"} kW) at ${snap["voltage"] ?? "?"} V.`,
+    `Used today ${snap["kwhToday"] ?? "?"} kWh costing K${snap["costTodayK"] ?? "?"}. Units left ${snap["unitsLeftKwh"] ?? "?"} kWh ≈ ${snap["hoursOfUnitsLeft"] ?? "?"} h at the current average (status ${snap["unitsStatus"] ?? "?"}).`,
+    circuits.length
+      ? "Circuits right now: " + circuits.map((c) => `${c.name} ${c.on ? `${c.watts} W / ${c.amps} A` : "SWITCHED OFF"}`).join("; ") + "."
+      : "No per-circuit readings yet.",
+  ];
+  if (snap["outageInProgress"]) lines.push(`OUTAGE IN PROGRESS: ${JSON.stringify(snap["outageInProgress"])}.`);
+  return lines.join("\n");
+}
+
 function summarise(rows: ReadingRow[]) {
   const first = rows[0];
   const last = rows[rows.length - 1];
@@ -160,8 +178,9 @@ You help the owner of ONE specific business understand and act on its electricit
         }.
 - Example monthly bill on the ZESCO commercial bands: 300 kWh ≈ K${Math.round(zescoCommercialMonthlyCost(300))}, 600 kWh ≈ K${Math.round(zescoCommercialMonthlyCost(600))}, 1000 kWh ≈ K${Math.round(zescoCommercialMonthlyCost(1000))}.
 
-# Live snapshot from the dashboard (JSON)
-${JSON.stringify(body.snapshot ?? {}, null, 0).slice(0, 6000)}
+# Live snapshot from the dashboard
+${liveSummary(body.snapshot)}
+Full snapshot JSON: ${JSON.stringify(body.snapshot ?? {}, null, 0).slice(0, 6000)}
 
 # Saved history (last 7 days)
 ${summarise((readings ?? []) as ReadingRow[])}
