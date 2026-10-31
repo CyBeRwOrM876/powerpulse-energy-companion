@@ -45,7 +45,7 @@ function Loss() {
   const criticalKw =
     business.circuits
       .filter((c) => c.priority === 1)
-      .reduce((s, c) => s + (live.get(c.id) ?? c.ratedW * 0.6), 0) / 1000;
+      .reduce((s, c) => s + ((t.outage ? 0 : live.get(c.id)) || c.ratedW * 0.6), 0) / 1000;
   const batteryKwh = (criticalKw * hours) / 0.8 / 0.9;
 
   return (
