@@ -17,6 +17,7 @@ import { Route as AuthenticatedCircuitsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLossRouteImport } from './routes/_authenticated/loss'
 import { Route as AuthenticatedZedbotRouteImport } from './routes/_authenticated/zedbot'
+import { Route as ApiZedbotRouteImport } from './routes/api/zedbot'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -57,6 +58,11 @@ const AuthenticatedZedbotRoute = AuthenticatedZedbotRouteImport.update({
   path: '/zedbot',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiZedbotRoute = ApiZedbotRouteImport.update({
+  id: '/api/zedbot',
+  path: '/api/zedbot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/loss': typeof AuthenticatedLossRoute
   '/zedbot': typeof AuthenticatedZedbotRoute
+  '/api/zedbot': typeof ApiZedbotRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/loss': typeof AuthenticatedLossRoute
   '/zedbot': typeof AuthenticatedZedbotRoute
+  '/api/zedbot': typeof ApiZedbotRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/loss': typeof AuthenticatedLossRoute
   '/_authenticated/zedbot': typeof AuthenticatedZedbotRoute
+  '/api/zedbot': typeof ApiZedbotRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/loss'
     | '/zedbot'
+    | '/api/zedbot'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/loss'
     | '/zedbot'
+    | '/api/zedbot'
   id:
     | '__root__'
     | '/'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/loss'
     | '/_authenticated/zedbot'
+    | '/api/zedbot'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -123,6 +135,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiZedbotRoute: typeof ApiZedbotRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -183,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedZedbotRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/zedbot': {
+      id: '/api/zedbot'
+      path: '/api/zedbot'
+      fullPath: '/api/zedbot'
+      preLoaderRoute: typeof ApiZedbotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -208,6 +228,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiZedbotRoute: ApiZedbotRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
