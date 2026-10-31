@@ -17,6 +17,7 @@ import { Route as AuthenticatedCircuitsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedLossRouteImport } from './routes/_authenticated/loss'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedZedbotRouteImport } from './routes/_authenticated/zedbot'
 import { Route as ApiZedbotRouteImport } from './routes/api/zedbot'
 
@@ -59,6 +60,11 @@ const AuthenticatedLossRoute = AuthenticatedLossRouteImport.update({
   path: '/loss',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedZedbotRoute = AuthenticatedZedbotRouteImport.update({
   id: '/zedbot',
   path: '/zedbot',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/loss': typeof AuthenticatedLossRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/zedbot': typeof AuthenticatedZedbotRoute
   '/api/zedbot': typeof ApiZedbotRoute
 }
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/loss': typeof AuthenticatedLossRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/zedbot': typeof AuthenticatedZedbotRoute
   '/api/zedbot': typeof ApiZedbotRoute
 }
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/loss': typeof AuthenticatedLossRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/zedbot': typeof AuthenticatedZedbotRoute
   '/api/zedbot': typeof ApiZedbotRoute
 }
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/history'
     | '/loss'
+    | '/settings'
     | '/zedbot'
     | '/api/zedbot'
   fileRoutesByTo: FileRoutesByTo
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/history'
     | '/loss'
+    | '/settings'
     | '/zedbot'
     | '/api/zedbot'
   id:
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
     | '/_authenticated/loss'
+    | '/_authenticated/settings'
     | '/_authenticated/zedbot'
     | '/api/zedbot'
   fileRoutesById: FileRoutesById
@@ -208,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLossRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/zedbot': {
       id: '/_authenticated/zedbot'
       path: '/zedbot'
@@ -230,6 +249,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedLossRoute: typeof AuthenticatedLossRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedZedbotRoute: typeof AuthenticatedZedbotRoute
 }
 
@@ -238,6 +258,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedLossRoute: AuthenticatedLossRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedZedbotRoute: AuthenticatedZedbotRoute,
 }
 
