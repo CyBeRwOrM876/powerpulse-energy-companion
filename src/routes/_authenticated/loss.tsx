@@ -80,7 +80,7 @@ function Loss() {
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground">Outage length</p>
             <p className="font-display text-4xl font-bold">{hours} hours</p>
-            <Slider className="mt-4" min={0.5} max={12} step={0.5} value={[hours]} onValueChange={(v) => setHours(v[0])} />
+            <Slider className="mt-4" min={0.5} max={12} step={0.5} value={[hours]} onValueChange={(v) => setHours(v[0] ?? 3)} />
             <div className="mt-2 flex justify-between text-xs text-muted-foreground">
               <span>30 min</span>
               <span>12 hours</span>

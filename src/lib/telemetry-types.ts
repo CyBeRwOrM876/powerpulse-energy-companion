@@ -16,7 +16,7 @@ export interface Telemetry {
   power_kw: number;
   /** Cumulative energy counter in kWh since the meter booted (time-accelerated by `speed`). */
   energy_kwh: number;
-  uptime_s?: number;
+  uptime_s?: number | undefined;
   /** Simulated minutes per real second (60 = 1 real second counts as 1 minute). */
   speed?: number;
   outage?: boolean;

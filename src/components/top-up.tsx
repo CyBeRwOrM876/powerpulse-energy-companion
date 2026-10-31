@@ -17,7 +17,7 @@ export function TopUpButton() {
   const n = Number(units);
 
   async function save() {
-    if (!Number.isFinite(n) || n <= 0 || n > 100000) return toast.error("Enter units between 1 and 100,000");
+    if (!Number.isFinite(n) || n <= 0 || n > 100000) { toast.error("Enter units between 1 and 100,000"); return; }
     await t.topUp(n);
     toast.success(`Added ${n} units`);
     setOpen(false);

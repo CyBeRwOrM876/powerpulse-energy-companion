@@ -52,7 +52,7 @@ function Onboarding() {
   const open = !profile.business_name;
 
   async function save() {
-    if (name.trim().length < 2) return toast.error("Enter your business name");
+    if (name.trim().length < 2) { toast.error("Enter your business name"); return; }
     await update.mutateAsync({ business_name: name.trim().slice(0, 120), business_type: type });
     toast.success("Business saved");
   }

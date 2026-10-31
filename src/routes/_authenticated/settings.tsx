@@ -51,9 +51,9 @@ function SettingsPage() {
     const tariff = Number(form.tariff_per_kwh);
     const profit = Number(form.profit_per_hour);
     const stock = Number(form.stock_value);
-    if (form.business_name.trim().length < 2) return toast.error("Enter your business name");
-    if (!(tariff > 0 && tariff < 50)) return toast.error("Tariff should be between K0 and K50 per kWh");
-    if (!(profit >= 0 && profit < 1e7) || !(stock >= 0 && stock < 1e9)) return toast.error("Check profit and stock values");
+    if (form.business_name.trim().length < 2) { toast.error("Enter your business name"); return; }
+    if (!(tariff > 0 && tariff < 50)) { toast.error("Tariff should be between K0 and K50 per kWh"); return; }
+    if (!(profit >= 0 && profit < 1e7) || !(stock >= 0 && stock < 1e9)) { toast.error("Check profit and stock values"); return; }
     await update.mutateAsync({
       full_name: form.full_name.trim().slice(0, 100),
       business_name: form.business_name.trim().slice(0, 120),
@@ -68,8 +68,8 @@ function SettingsPage() {
   async function saveConnection(e: React.FormEvent) {
     e.preventDefault();
     const id = conn.device_id.trim();
-    if (!/^[A-Za-z0-9_-]{3,40}$/.test(id)) return toast.error("Device ID: 3–40 letters, numbers, - or _");
-    if (!/^wss?:\/\/[^\s]+$/.test(conn.mqtt_url.trim())) return toast.error("Broker address must start with wss://");
+    if (!/^[A-Za-z0-9_-]{3,40}$/.test(id)) { toast.error("Device ID: 3–40 letters, numbers, - or _"); return; }
+    if (!/^wss?:\/\/[^\s]+$/.test(conn.mqtt_url.trim())) { toast.error("Broker address must start with wss://"); return; }
     await update.mutateAsync({ device_id: id, mqtt_url: conn.mqtt_url.trim().slice(0, 200) });
     toast.success("Connection saved — reconnecting");
   }

@@ -20,8 +20,8 @@ export const profileQuery = queryOptions({
       .from("profiles")
       .insert({
         id: user.id,
-        full_name: String(meta.full_name ?? meta.name ?? "").slice(0, 100),
-        business_name: String(meta.business_name ?? "").slice(0, 120),
+        full_name: String(meta["full_name"] ?? meta["name"] ?? "").slice(0, 100),
+        business_name: String(meta["business_name"] ?? "").slice(0, 120),
         device_id: `pp-${user.id.replace(/-/g, "").slice(0, 8)}`,
       })
       .select("*")

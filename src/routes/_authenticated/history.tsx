@@ -63,7 +63,7 @@ function HistoryPage() {
   const chart = rows.map((r) => ({ t: new Date(r.created_at).getTime(), kw: Number(r.total_kw), units: Number(r.units_left) }));
   const avg = rows.length ? rows.reduce((s, r) => s + Number(r.total_kw), 0) / rows.length : 0;
   const peak = rows.reduce((m, r) => Math.max(m, Number(r.total_kw)), 0);
-  const used = rows.length > 1 ? Math.max(0, Number(rows[0].units_left) - Number(rows[rows.length - 1].units_left)) : 0;
+  const used = rows.length > 1 ? Math.max(0, Number(rows[0]?.units_left ?? 0) - Number(rows.at(-1)?.units_left ?? 0)) : 0;
   const fmt = (t: number) =>
     range === "7d"
       ? new Date(t).toLocaleDateString([], { weekday: "short", hour: "2-digit" })
@@ -94,7 +94,7 @@ function HistoryPage() {
 
   async function clearAll() {
     const { error } = await supabase.from("readings").delete().eq("user_id", profile.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("History cleared");
     qc.invalidateQueries({ queryKey: ["readings"] });
   }
@@ -144,7 +144,7 @@ function HistoryPage() {
       </div>
 
       {isLoading ? (
-        <Panel className="mt-6 h-80 animate-pulse" />
+        <Panel className="mt-6 h-80 animate-pulse">{null}</Panel>
       ) : rows.length === 0 ? (
         <Panel className="mt-6 py-16 text-center">
           <p className="font-semibold">No readings in this period yet</p>

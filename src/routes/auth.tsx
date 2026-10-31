@@ -64,7 +64,7 @@ function AuthPage() {
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     const parsed = signupSchema.safeParse(form);
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (!parsed.success) { toast.error(parsed.error.issues[0]?.message ?? "Check the form"); return; }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: parsed.data.email,
@@ -79,13 +79,13 @@ function AuthPage() {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     if (!data.session) setSentTo(parsed.data.email);
   }
 
   async function handleSignin(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.email || !form.password) return toast.error("Enter your email and password");
+    if (!form.email || !form.password) { toast.error("Enter your email and password"); return; }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: form.email.trim(), password: form.password });
     setLoading(false);
@@ -95,13 +95,13 @@ function AuthPage() {
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
     const email = z.string().trim().email().safeParse(form.email);
-    if (!email.success) return toast.error("Enter a valid email");
+    if (!email.success) { toast.error("Enter a valid email"); return; }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Check your email for a reset link");
     setTab("signin");
   }
