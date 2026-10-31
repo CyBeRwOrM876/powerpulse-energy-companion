@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          business_name: string
+          business_type: string
+          created_at: string
+          data_source: string
+          device_id: string
+          full_name: string
+          id: string
+          mqtt_url: string
+          profit_per_hour: number
+          stock_value: number
+          tariff_per_kwh: number
+          units_balance: number
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string
+          business_type?: string
+          created_at?: string
+          data_source?: string
+          device_id?: string
+          full_name?: string
+          id: string
+          mqtt_url?: string
+          profit_per_hour?: number
+          stock_value?: number
+          tariff_per_kwh?: number
+          units_balance?: number
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string
+          business_type?: string
+          created_at?: string
+          data_source?: string
+          device_id?: string
+          full_name?: string
+          id?: string
+          mqtt_url?: string
+          profit_per_hour?: number
+          stock_value?: number
+          tariff_per_kwh?: number
+          units_balance?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      readings: {
+        Row: {
+          circuits: Json
+          created_at: string
+          id: number
+          kwh_today: number
+          source: string
+          total_kw: number
+          units_left: number
+          user_id: string
+          voltage: number
+        }
+        Insert: {
+          circuits?: Json
+          created_at?: string
+          id?: number
+          kwh_today?: number
+          source?: string
+          total_kw?: number
+          units_left?: number
+          user_id: string
+          voltage?: number
+        }
+        Update: {
+          circuits?: Json
+          created_at?: string
+          id?: number
+          kwh_today?: number
+          source?: string
+          total_kw?: number
+          units_left?: number
+          user_id?: string
+          voltage?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
