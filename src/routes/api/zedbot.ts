@@ -23,14 +23,16 @@ function json(status: number, error: string) {
 type ReadingRow = { created_at: string; total_kw: number; kwh_today: number; units_left: number; circuits: unknown };
 
 function summarise(rows: ReadingRow[]) {
-  if (!rows.length) return "No saved readings yet in the last 7 days.";
+  const first = rows[0];
+  const last = rows[rows.length - 1];
+  if (!first || !last) return "No saved readings yet in the last 7 days.";
   const tz = "Africa/Lusaka";
   const hourFmt = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone: tz });
   const dayFmt = new Intl.DateTimeFormat("en-CA", { timeZone: tz });
   const byHour = new Map<string, number[]>();
   const byDay = new Map<string, number>();
   const circuitW = new Map<string, { name: string; sum: number; n: number }>();
-  let peak = rows[0];
+  let peak: ReadingRow = first;
   for (const r of rows) {
     const d = new Date(r.created_at);
     const h = hourFmt.format(d);
@@ -59,8 +61,6 @@ function summarise(rows: ReadingRow[]) {
     .map((c) => `${c.name} avg ${Math.round(c.avg)} W (${Math.round((c.avg / totalCircuit) * 100)}%)`)
     .join("; ");
   const days = [...byDay.entries()].sort().map(([d, k]) => `${d}: ${k.toFixed(1)} kWh`).join("; ");
-  const first = rows[0];
-  const last = rows[rows.length - 1];
   return [
     `Saved readings: ${rows.length} (every ~30 s while the dashboard is open), from ${first.created_at} to ${last.created_at}.`,
     `Average load ${avg.toFixed(2)} kW; peak ${Number(peak.total_kw).toFixed(2)} kW at ${new Date(peak.created_at).toLocaleString("en-GB", { timeZone: tz })}.`,

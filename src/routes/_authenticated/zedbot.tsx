@@ -73,6 +73,7 @@ function ZedBot() {
       const id = setTimeout(() => send(q), 600);
       return () => clearTimeout(id);
     }
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 

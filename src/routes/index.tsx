@@ -98,7 +98,7 @@ function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild variant="hero" size="lg">
-                <Link to={signedIn ? "/dashboard" : "/auth"} search={signedIn ? undefined : { mode: "signup" }}>
+                <Link to={signedIn ? "/dashboard" : "/auth"} search={signedIn ? {} : { mode: "signup" }}>
                   <Zap /> {signedIn ? "Open dashboard" : "Register your business"}
                 </Link>
               </Button>
@@ -235,7 +235,7 @@ function Landing() {
               <p className="mt-2 opacity-90">Register your business and watch your board live in minutes.</p>
             </div>
             <Button asChild size="lg" variant="secondary">
-              <Link to={signedIn ? "/dashboard" : "/auth"} search={signedIn ? undefined : { mode: "signup" }}>
+              <Link to={signedIn ? "/dashboard" : "/auth"} search={signedIn ? {} : { mode: "signup" }}>
                 {signedIn ? "Open dashboard" : "Get started free"} <ArrowRight />
               </Link>
             </Button>
