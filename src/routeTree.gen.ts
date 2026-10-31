@@ -16,6 +16,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedCircuitsRouteImport } from './routes/_authenticated/circuits'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLossRouteImport } from './routes/_authenticated/loss'
+import { Route as AuthenticatedZedbotRouteImport } from './routes/_authenticated/zedbot'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +52,11 @@ const AuthenticatedLossRoute = AuthenticatedLossRouteImport.update({
   path: '/loss',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedZedbotRoute = AuthenticatedZedbotRouteImport.update({
+  id: '/zedbot',
+  path: '/zedbot',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/circuits': typeof AuthenticatedCircuitsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/loss': typeof AuthenticatedLossRoute
+  '/zedbot': typeof AuthenticatedZedbotRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/circuits': typeof AuthenticatedCircuitsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/loss': typeof AuthenticatedLossRoute
+  '/zedbot': typeof AuthenticatedZedbotRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,13 +85,27 @@ export interface FileRoutesById {
   '/_authenticated/circuits': typeof AuthenticatedCircuitsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/loss': typeof AuthenticatedLossRoute
+  '/_authenticated/zedbot': typeof AuthenticatedZedbotRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/reset-password' | '/circuits' | '/dashboard' | '/loss'
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/circuits'
+    | '/dashboard'
+    | '/loss'
+    | '/zedbot'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/reset-password' | '/circuits' | '/dashboard' | '/loss'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/circuits'
+    | '/dashboard'
+    | '/loss'
+    | '/zedbot'
   id:
     | '__root__'
     | '/'
@@ -93,6 +115,7 @@ export interface FileRouteTypes {
     | '/_authenticated/circuits'
     | '/_authenticated/dashboard'
     | '/_authenticated/loss'
+    | '/_authenticated/zedbot'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLossRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/zedbot': {
+      id: '/_authenticated/zedbot'
+      path: '/zedbot'
+      fullPath: '/zedbot'
+      preLoaderRoute: typeof AuthenticatedZedbotRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -160,12 +190,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCircuitsRoute: typeof AuthenticatedCircuitsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLossRoute: typeof AuthenticatedLossRoute
+  AuthenticatedZedbotRoute: typeof AuthenticatedZedbotRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCircuitsRoute: AuthenticatedCircuitsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLossRoute: AuthenticatedLossRoute,
+  AuthenticatedZedbotRoute: AuthenticatedZedbotRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
