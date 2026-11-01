@@ -16,7 +16,6 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedCircuitsRouteImport } from './routes/_authenticated/circuits'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
-import { Route as AuthenticatedLossRouteImport } from './routes/_authenticated/loss'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedZedbotRouteImport } from './routes/_authenticated/zedbot'
 import { Route as ApiZedbotRouteImport } from './routes/api/zedbot'
@@ -55,11 +54,6 @@ const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedLossRoute = AuthenticatedLossRouteImport.update({
-  id: '/loss',
-  path: '/loss',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -83,7 +77,6 @@ export interface FileRoutesByFullPath {
   '/circuits': typeof AuthenticatedCircuitsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
-  '/loss': typeof AuthenticatedLossRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/zedbot': typeof AuthenticatedZedbotRoute
   '/api/zedbot': typeof ApiZedbotRoute
@@ -95,7 +88,6 @@ export interface FileRoutesByTo {
   '/circuits': typeof AuthenticatedCircuitsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
-  '/loss': typeof AuthenticatedLossRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/zedbot': typeof AuthenticatedZedbotRoute
   '/api/zedbot': typeof ApiZedbotRoute
@@ -109,7 +101,6 @@ export interface FileRoutesById {
   '/_authenticated/circuits': typeof AuthenticatedCircuitsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
-  '/_authenticated/loss': typeof AuthenticatedLossRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/zedbot': typeof AuthenticatedZedbotRoute
   '/api/zedbot': typeof ApiZedbotRoute
@@ -123,7 +114,6 @@ export interface FileRouteTypes {
     | '/circuits'
     | '/dashboard'
     | '/history'
-    | '/loss'
     | '/settings'
     | '/zedbot'
     | '/api/zedbot'
@@ -135,7 +125,6 @@ export interface FileRouteTypes {
     | '/circuits'
     | '/dashboard'
     | '/history'
-    | '/loss'
     | '/settings'
     | '/zedbot'
     | '/api/zedbot'
@@ -148,7 +137,6 @@ export interface FileRouteTypes {
     | '/_authenticated/circuits'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
-    | '/_authenticated/loss'
     | '/_authenticated/settings'
     | '/_authenticated/zedbot'
     | '/api/zedbot'
@@ -213,13 +201,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/loss': {
-      id: '/_authenticated/loss'
-      path: '/loss'
-      fullPath: '/loss'
-      preLoaderRoute: typeof AuthenticatedLossRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -248,7 +229,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCircuitsRoute: typeof AuthenticatedCircuitsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
-  AuthenticatedLossRoute: typeof AuthenticatedLossRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedZedbotRoute: typeof AuthenticatedZedbotRoute
 }
@@ -257,7 +237,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCircuitsRoute: AuthenticatedCircuitsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
-  AuthenticatedLossRoute: AuthenticatedLossRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedZedbotRoute: AuthenticatedZedbotRoute,
 }
