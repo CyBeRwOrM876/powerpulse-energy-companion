@@ -6,7 +6,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AppHeader() {
   const { pathname } = useLocation();
-  const current = NAV.find((n) => pathname.startsWith(n.to)) ?? NAV[0];
+  const current = NAV.find((n) => pathname.startsWith(n.to)) ?? NAV[0]!;
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-background/80 backdrop-blur-xl">
