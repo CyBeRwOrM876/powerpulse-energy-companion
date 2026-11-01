@@ -27,14 +27,10 @@ export function matchCircuits(defs: CircuitDef[], live: CircuitReading[] | null 
     return defs.map((d) => ({ id: d.id, name: d.name, priority: d.priority, ratedW: d.ratedW, reading: null }));
   }
   return live.map((r) => {
-    const def = defs.find((d) => d.id === r.id) ?? defs.find((d) => norm(d.name) === norm(r.name));
-    return {
-      id: r.id,
-      name: r.name || def?.name || r.id,
-      priority: def?.priority ?? guessPriority(r.name || r.id),
-      ratedW: def && norm(def.name) === norm(r.name) ? def.ratedW : def && def.id === r.id && !r.name ? def.ratedW : null,
-      reading: r,
-    };
+    // Match by name; an id alone is only trusted when the meter sends no name.
+    const def = defs.find((d) => norm(d.name) === norm(r.name)) ?? (!r.name ? defs.find((d) => d.id === r.id) : undefined);
+    const name = r.name || def?.name || r.id;
+    return { id: r.id, name, priority: def?.priority ?? guessPriority(name), ratedW: def?.ratedW ?? null, reading: r };
   });
 }
 
