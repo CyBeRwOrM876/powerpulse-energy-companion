@@ -6,6 +6,7 @@ import { TopUpButton } from "@/components/top-up";
 import { Switch } from "@/components/ui/switch";
 import { useProfile } from "@/hooks/use-profile";
 import { getBusiness, PRIORITY_LABEL } from "@/lib/business";
+import { matchCircuits } from "@/lib/circuits";
 import { formatHours, formatKwacha, hoursOfUnitsLeft } from "@/lib/energy";
 import { useTelemetry } from "@/lib/telemetry";
 import { cn } from "@/lib/utils";
@@ -34,8 +35,9 @@ function Dashboard() {
   const t = useTelemetry();
   const kw = t.latest?.power_kw ?? 0;
   const hrs = hoursOfUnitsLeft(t.unitsLeft, t.avgKw);
-  const circuits = t.latest?.circuits ?? business.circuits.map((c) => ({ id: c.id, name: c.name, power_w: 0, current_a: 0, on: true }));
-  const maxW = Math.max(...business.circuits.map((c) => c.ratedW));
+  const rows = matchCircuits(business.circuits, t.latest?.circuits);
+  const circuits = rows.map((r) => ({ id: r.id, name: r.name, priority: r.priority, power_w: r.reading?.power_w ?? 0 }));
+  const maxW = Math.max(1, ...rows.map((r) => Math.max(r.ratedW ?? 0, r.reading?.power_w ?? 0)));
 
   const hour = new Date().getHours();
   const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -107,7 +109,7 @@ function Dashboard() {
           </div>
           <ul className="flex-1 space-y-3">
             {circuits.map((c) => {
-              const def = business.circuits.find((d) => d.id === c.id);
+              const def = c;
               const off = t.offCircuits.includes(c.id);
               return (
                 <li key={c.id} className="flex items-center gap-3">
@@ -125,7 +127,7 @@ function Dashboard() {
                         style={{ width: `${Math.min(100, (c.power_w / maxW) * 100)}%` }}
                       />
                     </div>
-                    {def && <p className="mt-1 text-[11px] text-muted-foreground">{PRIORITY_LABEL[def.priority]}</p>}
+                    <p className="mt-1 text-[11px] text-muted-foreground">{PRIORITY_LABEL[def.priority]}</p>
                   </div>
                   <Switch checked={!off} onCheckedChange={(v) => t.toggleCircuit(c.id, v)} aria-label={`Switch ${c.name}`} />
                 </li>
