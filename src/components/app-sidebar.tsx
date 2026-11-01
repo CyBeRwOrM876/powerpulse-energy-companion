@@ -26,7 +26,13 @@ import {
 import { useProfile } from "@/hooks/use-profile";
 import { getBusiness } from "@/lib/business";
 
-export const NAV_GROUPS = [
+type NavItem = {
+  to: "/dashboard" | "/circuits" | "/analysis" | "/history" | "/zedbot" | "/settings";
+  label: string;
+  icon: typeof LayoutDashboard;
+};
+
+export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Monitor",
     items: [
@@ -44,9 +50,9 @@ export const NAV_GROUPS = [
     label: "Business",
     items: [{ to: "/settings", label: "Settings", icon: Settings }],
   },
-] as const;
+];
 
-export const NAV = NAV_GROUPS.flatMap((g) => g.items);
+export const NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 export function AppSidebar() {
   const { pathname } = useLocation();
