@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { profileQuery, useProfile, useUpdateProfile } from "@/hooks/use-profile";
 import { TelemetryProvider } from "@/lib/telemetry";
 import { AppHeader } from "@/components/app-header";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { OutageBanner } from "@/components/dashboard-bits";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -31,13 +33,16 @@ function AuthedLayout() {
   const profile = useProfile();
   return (
     <TelemetryProvider profile={profile}>
-      <div className="min-h-screen bg-background">
-        <AppHeader />
-        <OutageBanner />
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          <Outlet />
-        </main>
-      </div>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset className="min-w-0">
+          <AppHeader />
+          <OutageBanner />
+          <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
+            <Outlet />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
       <Onboarding />
     </TelemetryProvider>
   );
