@@ -103,7 +103,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      circuit_usage: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          avg_w: number
+          name: string
+          peak_w: number
+        }[]
+      }
+      reading_buckets: {
+        Args: { p_bucket: string; p_from: string; p_to: string; p_tz?: string }
+        Returns: {
+          avg_kw: number
+          avg_v: number
+          bucket: string
+          kwh: number
+          peak_kw: number
+          readings: number
+          units_left: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

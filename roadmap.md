@@ -9,3 +9,7 @@
 - [x] Reference dataset (Zambian tariffs, appliance loads, business benchmarks, load-shedding facts) fed to ZedBot
 - [x] ESP32 firmware (simulated readings, MQTT publish) delivered as a file
 - [x] Tests for loss estimate and units-left rules
+- [ ] Left sidebar navigation (replaces dropdown)
+- [ ] History: filter by month and year
+- [ ] Circuits page shows live circuits from the meter's own MQTT data
+- [ ] Loss Analysis → Analysis: usage by day / week / month / year (outage cost kept as a section)
