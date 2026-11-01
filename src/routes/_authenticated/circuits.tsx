@@ -5,6 +5,7 @@ import { ConnectionNotice, PageHeader, Panel } from "@/components/dashboard-bits
 import { Switch } from "@/components/ui/switch";
 import { useProfile } from "@/hooks/use-profile";
 import { getBusiness, PRIORITY_LABEL, type Priority } from "@/lib/business";
+import { matchCircuits, shedOrder as orderToShed } from "@/lib/circuits";
 import { formatKwacha } from "@/lib/energy";
 import { useTelemetry } from "@/lib/telemetry";
 import { cn } from "@/lib/utils";
@@ -32,22 +33,24 @@ function Circuits() {
   const profile = useProfile();
   const business = getBusiness(profile.business_type);
   const t = useTelemetry();
-  const live = new Map((t.latest?.circuits ?? []).map((c) => [c.id, c]));
-  const total = Math.max(1, (t.latest?.circuits ?? []).reduce((s, c) => s + c.power_w, 0));
+  // Show exactly the circuits the meter reports; fall back to the business's list until it does.
+  const rows = matchCircuits(business.circuits, t.latest?.circuits);
+  const fromMeter = Boolean(t.latest?.circuits.length);
+  const total = Math.max(1, rows.reduce((s, c) => s + (c.reading?.power_w ?? 0), 0));
   const tariff = Number(profile.tariff_per_kwh);
 
-  const pieData = business.circuits.map((c) => ({ name: c.name, value: Math.round(live.get(c.id)?.power_w ?? 0) }));
-  const shedOrder = [...business.circuits].sort((a, b) => b.priority - a.priority || b.ratedW - a.ratedW);
+  const pieData = rows.map((c) => ({ name: c.name, value: Math.round(c.reading?.power_w ?? 0) }));
+  const shedOrder = orderToShed(rows);
 
   return (
     <>
-      <PageHeader title="Circuits" subtitle={`${business.circuits.length} circuits set up for ${business.label.toLowerCase()}`} />
+      <PageHeader title="Circuits" subtitle={fromMeter ? `${rows.length} circuits reported live by your meter` : `${rows.length} circuits set up for ${business.label.toLowerCase()} · waiting for the meter`} />
       <ConnectionNotice />
       <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
         <div className="grid gap-4 sm:grid-cols-2">
-          {business.circuits.map((c, i) => {
-            const r = live.get(c.id);
-            const off = t.offCircuits.includes(c.id);
+          {rows.map((c, i) => {
+            const r = c.reading;
+            const off = t.offCircuits.includes(c.id) || r?.on === false;
             const w = r?.power_w ?? 0;
             return (
               <Panel key={c.id} className={cn("transition-all", off && "opacity-60")}>
@@ -69,7 +72,7 @@ function Circuits() {
                   <Metric label="Share" value={`${Math.round((w / total) * 100)}`} unit="%" />
                 </div>
                 <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Rated {c.ratedW.toLocaleString()} W</span>
+                  <span>{c.ratedW ? `Rated ${c.ratedW.toLocaleString()} W` : r ? "Live from meter" : "No reading yet"}</span>
                   <span>≈ {formatKwacha((w / 1000) * tariff, 2)} / hour</span>
                 </div>
               </Panel>

@@ -93,6 +93,7 @@ export function TelemetryProvider({ profile, children }: { profile: Profile; chi
   const lastAlertRef = useRef<Record<string, number>>({});
   const hydratedRef = useRef(false);
   const offRef = useRef<string[]>([]);
+  const dayRef = useRef<string | null>(null);
 
   // Restore which circuits the owner switched off.
   useEffect(() => {
@@ -153,6 +154,16 @@ export function TelemetryProvider({ profile, children }: { profile: Profile; chi
       setLatest(m);
       setLastSeen(t);
       setSeries((s) => [...s, { t, kw: m.power_kw, v: m.voltage }].slice(-SERIES_MAX));
+
+      // A new day starts a fresh "used today" count.
+      const day = new Date(t).toDateString();
+      if (dayRef.current !== day) {
+        if (dayRef.current !== null) {
+          kwhRef.current = 0;
+          setKwhToday(0);
+        }
+        dayRef.current = day;
+      }
 
       // Energy: use the meter's cumulative counter so units match what the meter measured.
       const prev = lastEnergyRef.current;

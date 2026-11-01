@@ -1,28 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { BatteryCharging, Bot, Clock, Package, TrendingDown, ZapOff } from "lucide-react";
-import { PageHeader, Panel, StatCard } from "@/components/dashboard-bits";
+import { Panel, StatCard } from "@/components/dashboard-bits";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useProfile } from "@/hooks/use-profile";
 import { getBusiness } from "@/lib/business";
+import { matchCircuits } from "@/lib/circuits";
 import { estimateOutageLoss, formatHours, formatKwacha } from "@/lib/energy";
 import { useTelemetry } from "@/lib/telemetry";
 
-export const Route = createFileRoute("/_authenticated/loss")({
-  head: () => ({
-    meta: [
-      { title: "Loss Analysis — PowerPulse" },
-      { name: "description", content: "What a power outage costs your business in lost profit and spoiled stock." },
-      { property: "og:title", content: "Loss Analysis — PowerPulse" },
-      { property: "og:description", content: "Outage cost in Kwacha for your type of business." },
-    ],
-  }),
-  component: Loss,
-});
-
-function Loss() {
+/** What a power cut costs this business: lost profit, spoiled stock and backup size. */
+export function OutageCost() {
   const profile = useProfile();
   const business = getBusiness(profile.business_type);
   const t = useTelemetry();
@@ -40,32 +30,24 @@ function Loss() {
     [business, profit, stock],
   );
 
-  // Critical load = priority-1 circuits, using live draw when available.
-  const live = new Map((t.latest?.circuits ?? []).map((c) => [c.id, c.power_w]));
-  const criticalKw =
-    business.circuits
-      .filter((c) => c.priority === 1)
-      .reduce((s, c) => s + ((t.outage ? 0 : live.get(c.id)) || c.ratedW * 0.6), 0) / 1000;
+  // Critical load = critical circuits, using live draw when the meter reports it.
+  const rows = matchCircuits(business.circuits, t.latest?.circuits).filter((c) => c.priority === 1);
+  const criticalW = rows.reduce((s, c) => s + ((!t.outage && c.reading?.power_w) || (c.ratedW ?? 0) * 0.6), 0);
+  const criticalKw = criticalW / 1000;
   const batteryKwh = (criticalKw * hours) / 0.8 / 0.9;
 
   return (
     <>
-      <PageHeader
-        title="Loss Analysis"
-        subtitle={`What an outage costs a ${business.label.toLowerCase()} like yours`}
-        actions={
-          <>
-            <Button variant="outline" onClick={() => t.simulateOutage(30)} disabled={Boolean(t.outage)}>
-              <ZapOff /> Simulate 30 s outage
-            </Button>
-            <Button asChild variant="hero">
-              <Link to="/zedbot" search={{ q: `How can I reduce my loss during a ${hours} hour power cut?` }}>
-                <Bot /> Ask ZedBot
-              </Link>
-            </Button>
-          </>
-        }
-      />
+      <div className="mb-6 flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => t.simulateOutage(30)} disabled={Boolean(t.outage)}>
+          <ZapOff /> Simulate 30 s outage
+        </Button>
+        <Button asChild variant="hero">
+          <Link to="/zedbot" search={{ q: `How can I reduce my loss during a ${hours} hour power cut?` }}>
+            <Bot /> Ask ZedBot
+          </Link>
+        </Button>
+      </div>
 
       {t.outage && (
         <Panel className="mb-6 border-danger/40 bg-danger-soft">

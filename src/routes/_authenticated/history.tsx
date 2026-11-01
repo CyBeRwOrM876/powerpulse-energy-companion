@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Panel, StatCard } from "@/components/dashboard-bits";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFirstReadingYear, useUsageBuckets } from "@/hooks/use-usage";
+import { MONTHS } from "@/lib/periods";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,22 +39,43 @@ export const Route = createFileRoute("/_authenticated/history")({
 
 const RANGES = { "1h": 3600e3, "24h": 864e5, "7d": 7 * 864e5 } as const;
 type RangeKey = keyof typeof RANGES;
+type FilterKey = RangeKey | "month" | "year";
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "1h", label: "1h" },
+  { key: "24h", label: "24h" },
+  { key: "7d", label: "7d" },
+  { key: "month", label: "Month" },
+  { key: "year", label: "Year" },
+];
 
 const tooltipStyle = { background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 };
 
 function HistoryPage() {
   const profile = useProfile();
   const qc = useQueryClient();
-  const [range, setRange] = useState<RangeKey>("24h");
+  const [filter, setFilter] = useState<FilterKey>("24h");
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth());
+  const firstYear = useFirstReadingYear(profile.id).data ?? new Date().getFullYear();
+  const thisYear = new Date().getFullYear();
+  const years = Array.from({ length: Math.max(1, thisYear - Math.min(firstYear, thisYear) + 1) }, (_, i) => thisYear - i);
+  const isPeriod = filter === "month" || filter === "year";
 
-  const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["readings", range],
+  const period = useMemo(() => {
+    if (filter === "month") return { from: new Date(year, month, 1), to: new Date(year, month + 1, 1) };
+    return { from: new Date(year, 0, 1), to: new Date(year + 1, 0, 1) };
+  }, [filter, year, month]);
+
+  // Recent ranges: raw readings.
+  const { data: rawRows = [], isLoading: rawLoading } = useQuery({
+    queryKey: ["readings", filter],
+    enabled: !isPeriod,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("readings")
         .select("id,created_at,total_kw,voltage,kwh_today,units_left,circuits,source")
         .eq("user_id", profile.id)
-        .gte("created_at", new Date(Date.now() - RANGES[range]).toISOString())
+        .gte("created_at", new Date(Date.now() - RANGES[filter as RangeKey]).toISOString())
         .order("created_at", { ascending: true })
         .limit(1000);
       if (error) throw error;
@@ -59,17 +83,52 @@ function HistoryPage() {
     },
     refetchInterval: 30_000,
   });
+  const rows = isPeriod ? [] : rawRows;
 
-  const chart = rows.map((r) => ({ t: new Date(r.created_at).getTime(), kw: Number(r.total_kw), units: Number(r.units_left) }));
-  const avg = rows.length ? rows.reduce((s, r) => s + Number(r.total_kw), 0) / rows.length : 0;
-  const peak = rows.reduce((m, r) => Math.max(m, Number(r.total_kw)), 0);
-  const used = rows.length > 1 ? Math.max(0, Number(rows[0]?.units_left ?? 0) - Number(rows.at(-1)?.units_left ?? 0)) : 0;
+  // Month / year: one summary per day.
+  const days = useUsageBuckets(period.from, period.to, "day", isPeriod);
+  const dayRows = isPeriod ? (days.data ?? []) : [];
+  const isLoading = isPeriod ? days.isLoading : rawLoading;
+
+  const chart = isPeriod
+    ? dayRows.map((d) => ({ t: new Date(d.bucket).getTime(), kw: d.avg_kw, peak: d.peak_kw, units: d.units_left, kwh: d.kwh }))
+    : rows.map((r) => ({ t: new Date(r.created_at).getTime(), kw: Number(r.total_kw), peak: Number(r.total_kw), units: Number(r.units_left), kwh: 0 }));
+  const count = isPeriod ? dayRows.reduce((s, d) => s + d.readings, 0) : rows.length;
+  const avg = isPeriod
+    ? count ? dayRows.reduce((s, d) => s + d.avg_kw * d.readings, 0) / count : 0
+    : rows.length ? rows.reduce((s, r) => s + Number(r.total_kw), 0) / rows.length : 0;
+  const peak = isPeriod ? dayRows.reduce((m, d) => Math.max(m, d.peak_kw), 0) : rows.reduce((m, r) => Math.max(m, Number(r.total_kw)), 0);
+  const used = isPeriod
+    ? dayRows.reduce((s, d) => s + d.kwh, 0)
+    : rows.length > 1 ? Math.max(0, Number(rows[0]?.units_left ?? 0) - Number(rows.at(-1)?.units_left ?? 0)) : 0;
+  const hasData = isPeriod ? dayRows.length > 0 : rows.length > 0;
+  const periodName = filter === "month" ? `${MONTHS[month]} ${year}` : filter === "year" ? String(year) : filter;
   const fmt = (t: number) =>
-    range === "7d"
-      ? new Date(t).toLocaleDateString([], { weekday: "short", hour: "2-digit" })
-      : new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    filter === "year"
+      ? new Date(t).toLocaleDateString([], { day: "numeric", month: "short" })
+      : filter === "month"
+        ? String(new Date(t).getDate())
+        : filter === "7d"
+          ? new Date(t).toLocaleDateString([], { weekday: "short", hour: "2-digit" })
+          : new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const labelFmt = (t: number) => (isPeriod ? new Date(t).toLocaleDateString([], { weekday: "short", day: "numeric", month: "long", year: "numeric" }) : new Date(t).toLocaleString());
+
+  function download(text: string, name: string) {
+    const blob = new Blob([text], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
 
   function exportCsv() {
+    if (isPeriod) {
+      const header = "date,kwh_used,avg_kw,peak_kw,avg_voltage,units_left_end,readings\n";
+      const body = dayRows.map((d) => [d.bucket.slice(0, 10), d.kwh, d.avg_kw, d.peak_kw, d.avg_v, d.units_left, d.readings].join(",")).join("\n");
+      download(header + body, `powerpulse-daily-${periodName.replace(/\s+/g, "-").toLowerCase()}.csv`);
+      return;
+    }
     const header = "time,total_kw,voltage,kwh_today,units_left,source,circuits\n";
     const body = rows
       .map((r) =>
@@ -84,12 +143,7 @@ function HistoryPage() {
         ].join(","),
       )
       .join("\n");
-    const blob = new Blob([header + body], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `powerpulse-readings-${range}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    download(header + body, `powerpulse-readings-${filter}.csv`);
   }
 
   async function clearAll() {
@@ -106,14 +160,42 @@ function HistoryPage() {
         subtitle="A reading is saved every 30 seconds while your dashboard is open"
         actions={
           <>
-            <ToggleGroup type="single" value={range} onValueChange={(v) => v && setRange(v as RangeKey)} className="rounded-xl border border-border bg-card p-1">
-              {(Object.keys(RANGES) as RangeKey[]).map((k) => (
-                <ToggleGroupItem key={k} value={k} className="rounded-lg px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                  {k}
+            <ToggleGroup type="single" value={filter} onValueChange={(v) => v && setFilter(v as FilterKey)} className="rounded-xl border border-border bg-card p-1">
+              {FILTERS.map((f) => (
+                <ToggleGroupItem key={f.key} value={f.key} className="rounded-lg px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                  {f.label}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-            <Button variant="outline" onClick={exportCsv} disabled={!rows.length}>
+            {filter === "month" && (
+              <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+                <SelectTrigger className="h-10 w-36 rounded-xl" aria-label="Month">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m, i) => (
+                    <SelectItem key={m} value={String(i)}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {isPeriod && (
+              <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+                <SelectTrigger className="h-10 w-28 rounded-xl" aria-label="Year">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button variant="outline" onClick={exportCsv} disabled={!hasData}>
               <Download /> CSV
             </Button>
             <AlertDialog>
@@ -138,22 +220,22 @@ function HistoryPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Average load" value={avg.toFixed(2)} unit="kW" icon={<Activity className="size-4" />} hint={`${rows.length} readings`} />
+        <StatCard label="Average load" value={avg.toFixed(2)} unit="kW" icon={<Activity className="size-4" />} hint={`${count.toLocaleString()} readings · ${periodName}`} />
         <StatCard label="Peak load" value={peak.toFixed(2)} unit="kW" tone="sun" icon={<TrendingUp className="size-4" />} />
-        <StatCard label="Units used" value={used.toFixed(1)} unit="kWh" tone="success" icon={<Gauge className="size-4" />} hint="Across this period (top-ups excluded)" />
+        <StatCard label="Units used" value={used.toFixed(1)} unit="kWh" tone="success" icon={<Gauge className="size-4" />} hint={isPeriod ? `Total for ${periodName}` : "Across this period (top-ups excluded)"} />
       </div>
 
       {isLoading ? (
         <Panel className="mt-6 h-80 animate-pulse">{null}</Panel>
-      ) : rows.length === 0 ? (
+      ) : !hasData ? (
         <Panel className="mt-6 py-16 text-center">
-          <p className="font-semibold">No readings in this period yet</p>
+          <p className="font-semibold">No readings for {periodName} yet</p>
           <p className="mt-1 text-sm text-muted-foreground">Keep the dashboard open while the meter is sending data.</p>
         </Panel>
       ) : (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Panel>
-            <h2 className="text-lg font-semibold">Load over time</h2>
+            <h2 className="text-lg font-semibold">{isPeriod ? "Daily average load" : "Load over time"}</h2>
             <div className="mt-4 h-72">
               <ResponsiveContainer>
                 <AreaChart data={chart} margin={{ left: -18, right: 6 }}>
@@ -166,29 +248,55 @@ function HistoryPage() {
                   <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="t" tickFormatter={fmt} stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} minTickGap={50} />
                   <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} unit=" kW" width={60} />
-                  <Tooltip contentStyle={tooltipStyle} labelFormatter={(t: number) => new Date(t).toLocaleString()} formatter={(v: number) => [`${v.toFixed(2)} kW`, "Load"]} />
+                  <Tooltip contentStyle={tooltipStyle} labelFormatter={labelFmt} formatter={(v: number) => [`${v.toFixed(2)} kW`, "Load"]} />
                   <Area type="monotone" dataKey="kw" stroke="var(--chart-1)" strokeWidth={2} fill="url(#hFill)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </Panel>
           <Panel>
-            <h2 className="text-lg font-semibold">Units left</h2>
+            <h2 className="text-lg font-semibold">{isPeriod ? "Units left at end of day" : "Units left"}</h2>
             <div className="mt-4 h-72">
               <ResponsiveContainer>
                 <LineChart data={chart} margin={{ left: -18, right: 6 }}>
                   <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="t" tickFormatter={fmt} stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} minTickGap={50} />
                   <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} width={60} />
-                  <Tooltip contentStyle={tooltipStyle} labelFormatter={(t: number) => new Date(t).toLocaleString()} formatter={(v: number) => [`${v.toFixed(1)} kWh`, "Units"]} />
+                  <Tooltip contentStyle={tooltipStyle} labelFormatter={labelFmt} formatter={(v: number) => [`${v.toFixed(1)} kWh`, "Units"]} />
                   <Line type="monotone" dataKey="units" stroke="var(--chart-2)" strokeWidth={2.5} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </Panel>
           <Panel className="lg:col-span-2">
-            <h2 className="text-lg font-semibold">Latest readings</h2>
+            <h2 className="text-lg font-semibold">{isPeriod ? `Day by day · ${periodName}` : "Latest readings"}</h2>
             <div className="mt-3 overflow-x-auto">
+              {isPeriod ? (
+                <table className="w-full text-sm">
+                  <thead className="text-left text-xs text-muted-foreground">
+                    <tr>
+                      <th className="py-2 pr-4 font-medium">Date</th>
+                      <th className="py-2 pr-4 font-medium">Used</th>
+                      <th className="py-2 pr-4 font-medium">Avg load</th>
+                      <th className="py-2 pr-4 font-medium">Peak</th>
+                      <th className="py-2 pr-4 font-medium">Voltage</th>
+                      <th className="py-2 font-medium">Units left</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-mono text-xs">
+                    {[...dayRows].reverse().map((d) => (
+                      <tr key={d.bucket} className="border-t border-border">
+                        <td className="py-2 pr-4">{new Date(d.bucket).toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}</td>
+                        <td className="py-2 pr-4">{d.kwh.toFixed(2)} kWh</td>
+                        <td className="py-2 pr-4">{d.avg_kw.toFixed(2)} kW</td>
+                        <td className="py-2 pr-4">{d.peak_kw.toFixed(2)} kW</td>
+                        <td className="py-2 pr-4">{d.avg_v.toFixed(0)} V</td>
+                        <td className="py-2">{d.units_left.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
               <table className="w-full text-sm">
                 <thead className="text-left text-xs text-muted-foreground">
                   <tr>
@@ -213,6 +321,7 @@ function HistoryPage() {
                   ))}
                 </tbody>
               </table>
+              )}
             </div>
           </Panel>
         </div>

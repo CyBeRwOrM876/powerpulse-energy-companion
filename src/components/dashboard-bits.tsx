@@ -74,8 +74,8 @@ export function OutageBanner() {
           Off for <b className="font-mono">{formatHours(t.outage.simHours)}</b> · estimated loss so far{" "}
           <b className="font-mono">{formatKwacha(t.outage.loss)}</b>
         </p>
-        <Link to="/loss" className="ml-auto font-semibold text-danger underline-offset-4 hover:underline">
-          See loss analysis
+        <Link to="/analysis" search={{ tab: "outage" }} className="ml-auto font-semibold text-danger underline-offset-4 hover:underline">
+          See outage cost
         </Link>
       </div>
     </div>

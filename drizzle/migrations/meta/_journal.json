@@ -15,6 +15,13 @@
       "when": 1793485455271,
       "tag": "0001_tariff_default",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793520072886,
+      "tag": "0002_reading_buckets",
+      "breakpoints": true
     }
   ]
 }
